@@ -1,0 +1,12 @@
+.env
+*.cb
+*.pkl
+*.pth
+*.pyc
+*.zip
+*.png
+data
+__pyache__
+catboost_info
+mlruns
+MSCRED_MODULE
