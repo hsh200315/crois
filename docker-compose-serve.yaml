@@ -1,0 +1,26 @@
+services:
+  model-serving-regression:
+    image: serve-tool_wear_regression
+    container_name: model-serving-regression
+    ports:
+      - "${MODEL_REGRESSION_SERVING_PORT}:8000"
+    environment:
+      MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI}
+      MLFLOW_S3_ENDPOINT_URL: ${MLFLOW_S3_ENDPOINT_URL}
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+      EXPERIMENT_NAME: tool_wear_regression
+    networks:
+      - model_pipeline
+    restart: always
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+networks:
+  model_pipeline:
+    external: true
