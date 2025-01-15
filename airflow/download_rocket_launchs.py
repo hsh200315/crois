@@ -11,13 +11,13 @@ from airflow.operators.python import PythonOperator
 dag = DAG(
     dag_id="download_rocket_launches",
     start_date=airflow.utils.dates.days_ago(14),
-    schedule_interval=None,
+    schedule_interval="@daily",
 )
 
 download_launches = BashOperator(
     task_id="download_launches",
-	bash_command="curl -o /tmp/launches.json 'https://ll.thespacedevs.com/2.0.0/launch/upcoming'",
-	dag=dag,
+    bash_command="curl -o /tmp/launches.json 'https://ll.thespacedevs.com/2.0.0/launch/upcoming/?limit=10&offset=20'",
+    dag=dag,
 )
 
 def _get_pictures():
@@ -32,7 +32,7 @@ def _get_pictures():
 			try:
 				response = requests.get(image_url)
 				image_filename = image_url.split("/")[-1]
-				target_file = f"./images/{image_filename}"
+				target_file = f"tmp/images/{image_filename}"
 				with open(f"/tmp/images/{image_filename}", "wb") as f:
 					f.write(response.content)
 				print(f"Downloaded {image_url} to {target_file}")
@@ -49,8 +49,24 @@ get_pictures = PythonOperator(
 
 notify = BashOperator(
     task_id="notify",
-	bash_command='echo "There are now $(ls ./images/ | wc -l) images."',
+	bash_command='echo "There are now $(ls /tmp/images/ | wc -l) images."',
 	dag=dag,
 )
 
+# 화살표(>>)는 각 테스크 실행 순서를 설정
 download_launches >> get_pictures >> notify
+
+
+# docker run -it -p 8081:8080 -v /home/scar/Desktop/sanghoon/crois/airflow/download_rocket_launchs.py:/opt/airflow/dags/download_rocket_launches.py --entrypoint=/bin/bash --name airflow apache/airflow:latest-python3.8 -c '( \
+# airflow db init && \
+# airflow users create \
+# --username admin \
+# --password admin \
+# --firstname Anonymous \
+# --lastname Admin \
+# --role Admin \
+# --email admin@example.org \
+# ); \
+# airflow webserver & \
+# airflow scheduler \
+# '
